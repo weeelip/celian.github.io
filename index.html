@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de Tâches</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="./src/css/style.css">
+    <script src="./src/js/script.js" type="module" defer></script>
+    <script src="./src/js/utils.js" type="module" defer></script>
+</head>
+
+<body class="bg-light">
+    <!-- la barre de navigation -->
+    <nav class="navbar navbar-dark bg-primary px-3">
+        <span class="navbar-brand mb-0 h1">Gestionnaire de Tâches</span>
+    </nav>
+
+    <div class="container mt-4">
+
+        <!-- la barre de recherche -->
+        <input type="text" id="recherche" class="form-control mb-3" placeholder="Rechercher une tâche..."
+            oninput="afficherTaches()">
+
+        <!-- le filtres et le tri -->
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div class="btn-group">
+                <button class="btn btn-outline-primary" onclick="filtrerTaches('toutes')">Toutes</button>
+                <button class="btn btn-outline-warning" onclick="filtrerTaches('en_cours')">En cours</button>
+                <button class="btn btn-outline-success" onclick="filtrerTaches('terminee')">Terminées</button>
+            </div>
+            <select id="tri" class="form-select w-auto" onchange="afficherTaches()">
+                <option value="">-- Trier par --</option>
+                <option value="date">Trier par date</option>
+                <option value="priorite">Trier par priorité</option>
+            </select>
+        </div>
+
+        <!-- Barre de progression pour mieux visualiser les tâches -->
+        <div class="mb-4">
+            <label for="barre-progression" class="form-label">Progression :</label>
+            <div class="progress">
+                <div id="barre-progression" class="progress-bar bg-success" role="progressbar" style="width: 0%">0%
+                </div>
+            </div>
+        </div>
+
+        <!-- Ici la liste des tâches -->
+        <ul id="liste-taches" class="list-group"></ul>
+
+    </div>
+
+    <!-- Bouton flottant pour ajouter une tâche -->
+    <button class="btn btn-primary position-fixed bottom-0 end-0 m-4 rounded-circle fs-4" data-bs-toggle="modal"
+        data-bs-target="#modalTache">+</button>
+
+    <!-- Modal pour ajouter une tâche -->
+    <div class="modal fade" id="modalTache" tabindex="-1" aria-labelledby="titreModalTache" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="titreModalTache">Nouvelle Tâche</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="titre" class="form-control mb-2" placeholder="Titre">
+                    <textarea id="description" class="form-control mb-2" placeholder="Description"></textarea>
+                    <input type="date" id="date-echeance" class="form-control mb-2">
+                    <select id="priorite" class="form-select">
+                        <option value="basse">Basse</option>
+                        <option value="moyenne">Moyenne</option>
+                        <option value="elevee">Élevée</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button class="btn btn-success" onclick="ajouterTache()" data-bs-dismiss="modal">Ajouter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+</body>
+
+</html>
