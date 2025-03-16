@@ -1,33 +1,52 @@
 import { Tache } from './tache.js'
 import { Utils } from './utils.js'
+import { auth, db } from './firebaseConfig.js' // Import Firebase
+import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, where } from 'firebase/firestore'
 
-/* global alert, localStorage, Notification */
+/* global alert, Notification */
 let listeTaches = []
+let utilisateurId = null // Stocke l'ID utilisateur Firebase
 
-function afficherTaches (filtre = 'toutes') {
+// Fonction pour s'authentifier anonymement
+async function authentifierUtilisateur() {
+  try {
+    const userCredential = await auth.signInAnonymously()
+    utilisateurId = userCredential.user.uid
+    chargerTaches() // Charger les tâches de Firestore après l'authentification
+  } catch (error) {
+    console.error("Erreur d'authentification :", error)
+  }
+}
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    utilisateurId = user.uid
+    chargerTaches()
+  }
+})
+
+/*
+    * Fonction pour afficher les tâches en fonction du filtre et du tri
+*/
+async function afficherTaches (filtre = 'toutes') {
   const listeTachesElement = document.getElementById('liste-taches')
   listeTachesElement.innerHTML = ''
 
-  // On récupère le critère de tri, si non défini, on trie par date
   const critereTri = document.getElementById('tri') ? document.getElementById('tri').value : 'date'
 
-  // On applique le tri sur la liste des tâches en fonction du critère choisi par l'utilisateur
   if (critereTri === 'date') {
-    listeTaches.sort(Utils.comparerParDate)// On trie par date d'échéance croissante (les tâches sans date d'échéance sont placées en dernier)
+    listeTaches.sort(Utils.comparerParDate)
   } else if (critereTri === 'priorite') {
-    listeTaches.sort(Utils.comparerParPriorite)// On trie par priorité décroissante (élevée -> moyenne -> basse)
+    listeTaches.sort(Utils.comparerParPriorite)
   }
 
-  // Même principe pour le filtre : on récupère le critère choisi par l'utilisateur et on filtre la liste des tâches
   let tachesFiltrees = listeTaches
   if (filtre === 'en_cours') {
     tachesFiltrees = listeTaches.filter(t => t.statut === 'en_cours')
   } else if (filtre === 'terminee') {
     tachesFiltrees = listeTaches.filter(t => t.statut === 'terminee')
   }
-  
 
-  // On parcourt la liste des tâches filtrées pour les afficher dans la page
   tachesFiltrees.forEach((tache, index) => {
     const li = document.createElement('li')
 
@@ -40,17 +59,16 @@ function afficherTaches (filtre = 'toutes') {
     }
 
     li.innerHTML = tache.getHtml(index)
-
     listeTachesElement.appendChild(li)
   })
 
-  mettreAJourProgression() // Mise à jour de la barre de progression
-  verifierEcheances() // On vérifie si des tâches approchent de leur échéance
+  mettreAJourProgression()
+  verifierEcheances()
 }
 
 /*
-    * Fonction pour ajouter une tâche à la liste
- */
+    * Fonction pour ajouter une tâche à Firestore
+*/
 async function ajouterTache () {
   const titre = document.getElementById('titre').value.trim()
   const description = document.getElementById('description').value.trim()
@@ -61,83 +79,75 @@ async function ajouterTache () {
     alert('Le titre est obligatoire !')
     return
   }
-  const nouvelleTache = new Tache(titre, description, dateEcheance, priorite) //Création de la tâche
-  listeTaches.push(nouvelleTache) // Ajout de la tâche à la liste
-  afficherTaches()
-  enregistrerTaches()
-}
-
-/*
-    * Fonction pour filtrer les tâches en fonction de leur statut
-    @param {string} filtre - Le statut des tâches à afficher
-    */
-function filtrerTaches (filtre) {
-  afficherTaches(filtre)
-}
-
-/*
-    * Fonction pour supprimer une tâche de la liste
-    @param {number} index - L'index de la tâche à supprimer
-    */
-function supprimerTache (index) {
-  listeTaches.splice(index, 1)
-  afficherTaches()
-  enregistrerTaches()
-}
-
-/*
-    * Fonction pour mettre à jour la barre de progression
-*/
-function mettreAJourProgression () {
-  const tachesTerminees = listeTaches.filter(t => t.statut === 'terminee').length
-  const progression = listeTaches.length ? (tachesTerminees / listeTaches.length) * 100 : 0
-
-  document.getElementById('barre-progression').style.width = `${progression}%`
-  document.getElementById('barre-progression').textContent = `${Math.round(progression)}%`
-}
-
-/*
-    * Fonction pour enregistrer la liste des tâches dans le localStorage
-*/
-function enregistrerTaches () {
-  localStorage.setItem('listeTaches', JSON.stringify(listeTaches))
-}
-
-/*
-    * Fonction pour charger les tâches enregistrées dans le localStorage
-*/
-function chargerTaches () {
-    const tachesEnregistrees = localStorage.getItem('listeTaches')
-    if (tachesEnregistrees) {
-      listeTaches = JSON.parse(tachesEnregistrees).map(t => {
-        let tache = new Tache()
-        tache.titre = t._titre
-        tache.description = t._description
-        tache.dateEcheance = t._dateEcheance
-        tache.priorite = t._priorite
-        tache.statut = t._statut
-        return tache
-      })
-    }
-    afficherTaches()
-  }
   
+  try {
+    const docRef = await addDoc(collection(db, 'taches'), {
+      utilisateurId,
+      titre,
+      description,
+      dateEcheance,
+      priorite,
+      statut: 'en_cours'
+    })
+    
+    listeTaches.push(new Tache(titre, description, dateEcheance, priorite, docRef.id))
+    afficherTaches()
+  } catch (error) {
+    console.error("Erreur lors de l'ajout de la tâche :", error)
+  }
+}
+
+/*
+    * Fonction pour charger les tâches depuis Firestore
+*/
+async function chargerTaches() {
+  if (!utilisateurId) return
+  listeTaches = []
+  
+  const q = query(collection(db, 'taches'), where("utilisateurId", "==", utilisateurId))
+  const querySnapshot = await getDocs(q)
+  querySnapshot.forEach(doc => {
+    const data = doc.data()
+    listeTaches.push(new Tache(data.titre, data.description, data.dateEcheance, data.priorite, doc.id, data.statut))
+  })
+  afficherTaches()
+}
+
+/*
+    * Fonction pour supprimer une tâche de Firestore
+*/
+async function supprimerTache (index) {
+  const tache = listeTaches[index]
+  if (!tache || !tache.id) return
+  
+  try {
+    await deleteDoc(doc(db, 'taches', tache.id))
+    listeTaches.splice(index, 1)
+    afficherTaches()
+  } catch (error) {
+    console.error("Erreur lors de la suppression de la tâche :", error)
+  }
+}
+
 /*
     * Fonction pour terminer une tâche
-    @param {number} index - L'index de la tâche à terminer
 */
-function terminerTache (index) {
+async function terminerTache (index) {
   const tache = listeTaches[index]
-  if (tache) {
+  if (!tache || !tache.id) return
+
+  try {
+    await updateDoc(doc(db, 'taches', tache.id), {
+      statut: 'terminee'
+    })
     tache.terminer()
     afficherTaches()
-    enregistrerTaches()
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour de la tâche :", error)
   }
 }
 
-/*
-    * Fonction pour vérifier si des tâches approchent de leur échéance
-*/
+// Vérifier les échéances des tâches
 function verifierEcheances () {
   const maintenant = new Date()
   listeTaches.forEach(tache => {
@@ -145,7 +155,6 @@ function verifierEcheances () {
       const dateEcheance = new Date(tache.dateEcheance)
       const tempsRestant = dateEcheance - maintenant
 
-      // Si l'échéance est dans moins de 24 heures
       if (tempsRestant > 0 && tempsRestant <= 24 * 60 * 60 * 1000) {
         if (Notification.permission === 'granted') {
           new Notification(`La tâche "${tache.titre}" approche de son échéance !`)
@@ -155,15 +164,12 @@ function verifierEcheances () {
   })
 }
 
-// Demander l'autorisation pour afficher les notifications
 if (Notification.permission !== 'granted') {
   Notification.requestPermission()
 }
 
-// Attacher les fonctions aux éléments de la page
-window.onload = chargerTaches
+window.onload = authentifierUtilisateur
 window.ajouterTache = ajouterTache
 window.terminerTache = terminerTache
 window.supprimerTache = supprimerTache
 window.afficherTaches = afficherTaches
-window.filtrerTaches = filtrerTaches
