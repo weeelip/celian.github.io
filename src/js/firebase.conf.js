@@ -1,6 +1,9 @@
-export const FirebaseConfig = {
+import { initializeApp } from 'firebase/app'
+import { getAuth } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
 
-  firebaseConfig: {
+
+  const firebaseConfig = {
     type: 'service_account',
     projectId: 'gestionnairedetachecefim2025',
     private_key_id: '0f66941cba302f0991e3bead2b0b275c51eb92ee',
@@ -13,4 +16,11 @@ export const FirebaseConfig = {
     client_x509_cert_url: 'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40gestionnairedetachecefim2025.iam.gserviceaccount.com',
     universe_domain: 'googleapis.com'
   }
-}
+
+  const app = initializeApp(firebaseConfig)
+
+  // Authentification et base de données Firestore
+  const auth = getAuth(app)
+  const db = getFirestore(app)
+  
+  export { auth, db }
