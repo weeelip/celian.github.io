@@ -1,10 +1,11 @@
 export class Tache {
-  constructor (titre = '', description = '', dateEcheance = '', priorite = 'basse', statut = 'en_cours') {
+  constructor (titre = '', description = '', dateEcheance = '', priorite = 'basse', id , statut = 'en_cours') {
     this._titre = titre.trim()
     this._description = description.trim()
     this._dateEcheance = dateEcheance
     this._priorite = ['basse', 'moyenne', 'elevee'].includes(priorite.toLowerCase()) ? priorite.toLowerCase() : 'basse'
     this._statut = statut
+    this._id = id
   }
 
   get titre () {
@@ -25,6 +26,10 @@ export class Tache {
 
   get statut () {
     return this._statut
+  }
+
+  get id () {
+    return this._id
   }
 
   get couleurBadge () {

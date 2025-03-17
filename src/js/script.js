@@ -1,29 +1,21 @@
 import { Tache } from './tache.js'
 import { Utils } from './utils.js'
-import { auth, db } from './firebaseConfig.js' // Import Firebase
-import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, where } from 'firebase/firestore'
-
+import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/9.4.0/firebase-firestore.js";
+import { db, auth, authentifierUtilisateur } from './firebase.conf.js';
 /* global alert, Notification */
-let listeTaches = []
-let utilisateurId = null // Stocke l'ID utilisateur Firebase
 
 // Fonction pour s'authentifier anonymement
-async function authentifierUtilisateur() {
-  try {
-    const userCredential = await auth.signInAnonymously()
-    utilisateurId = userCredential.user.uid
-    chargerTaches() // Charger les tâches de Firestore après l'authentification
-  } catch (error) {
-    console.error("Erreur d'authentification :", error)
-  }
-}
+let listeTaches = [];
+let utilisateurId = null;
+
 
 auth.onAuthStateChanged(user => {
   if (user) {
-    utilisateurId = user.uid
-    chargerTaches()
+    utilisateurId = user.uid;
+    chargerTaches();
   }
-})
+});
+
 
 /*
     * Fonction pour afficher les tâches en fonction du filtre et du tri
@@ -101,18 +93,17 @@ async function ajouterTache () {
     * Fonction pour charger les tâches depuis Firestore
 */
 async function chargerTaches() {
-  if (!utilisateurId) return
-  listeTaches = []
+  if (!utilisateurId) return;
+  listeTaches = [];
   
-  const q = query(collection(db, 'taches'), where("utilisateurId", "==", utilisateurId))
-  const querySnapshot = await getDocs(q)
+  const q = query(collection(db, 'taches'), where("utilisateurId", "==", utilisateurId));
+  const querySnapshot = await getDocs(q);
   querySnapshot.forEach(doc => {
-    const data = doc.data()
-    listeTaches.push(new Tache(data.titre, data.description, data.dateEcheance, data.priorite, doc.id, data.statut))
-  })
-  afficherTaches()
+    const data = doc.data();
+    listeTaches.push(new Tache(data.titre, data.description, data.dateEcheance, data.priorite, doc.id, data.statut));
+  });
+  afficherTaches();
 }
-
 /*
     * Fonction pour supprimer une tâche de Firestore
 */
@@ -162,6 +153,14 @@ function verifierEcheances () {
       }
     }
   })
+}
+
+function mettreAJourProgression () {
+  const tachesTerminees = listeTaches.filter(t => t.statut === 'terminee').length
+  const progression = listeTaches.length ? (tachesTerminees / listeTaches.length) * 100 : 0
+
+  document.getElementById('barre-progression').style.width =`${progression}%`
+  document.getElementById('barre-progression').textContent = `${Math.round(progression)}%`
 }
 
 if (Notification.permission !== 'granted') {
