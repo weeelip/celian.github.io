@@ -1,6 +1,7 @@
 import { Tache } from './tache.js'
 import { Utils } from './utils.js'
 
+
 /* global alert, localStorage, Notification */
 let listeTaches = []
 
@@ -54,7 +55,9 @@ function afficherTaches (filtre = 'toutes') {
 async function ajouterTache () {
   const titre = document.getElementById('titre').value.trim()
   const description = document.getElementById('description').value.trim()
-  const dateEcheance = document.getElementById('date-echeance').value
+  let dateEcheance = new Date(document.getElementById('date-echeance').value)
+  dateEcheance = dateEcheance.toLocaleDateString('fr-fr')
+  console.log(dateEcheance)
   const priorite = document.getElementById('priorite').value
 
   if (!titre) {

@@ -1,5 +1,5 @@
 export class Tache {
-  constructor (titre = '', description = '', dateEcheance = '', priorite = 'basse', statut = 'en_cours') {
+  constructor (titre = '', description = '', dateEcheance, priorite = 'basse', statut = 'en_cours') {
     this._titre = titre.trim()
     this._description = description.trim()
     this._dateEcheance = dateEcheance
