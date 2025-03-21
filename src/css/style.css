@@ -93,11 +93,19 @@
             border: none;
             border-radius: 10px;
         }
+        .btn-danger {
+            background-color: #dc3545;
+            border: none;
+            border-radius: 10px;
+        }
 
         .btn-success:hover {
             background-color: #218838;
         }
-
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
         .btn-secondary {
             background-color: #6c757d;
             border: none;

@@ -9,8 +9,9 @@ function afficherTaches (filtre = 'toutes') {
   const listeTachesElement = document.getElementById('liste-taches')
   listeTachesElement.innerHTML = ''
 
-  // On récupère le critère de tri, si non défini, on trie par date
-  const critereTri = document.getElementById('tri') ? document.getElementById('tri').value : 'date'
+  const critereTri = document.getElementById('tri') ? document.getElementById('tri').value : 'date'   // On récupère le critère de tri, si non défini, on trie par date
+  const champRecherche = document.getElementById('recherche') // On récupère le champ de recherche
+  const termeRecherche = champRecherche ? champRecherche.value.toLowerCase() : ''// On récupère le terme de recherche, si non défini, on recherche tout
 
   // On applique le tri sur la liste des tâches en fonction du critère choisi par l'utilisateur
   if (critereTri === 'date') {
@@ -26,11 +27,17 @@ function afficherTaches (filtre = 'toutes') {
   } else if (filtre === 'terminee') {
     tachesFiltrees = listeTaches.filter(t => t.statut === 'terminee')
   }
-  
 
+  // -- Recherche par mot-clé (titre ou description)
+  if (termeRecherche) {
+    tachesFiltrees = tachesFiltrees.filter(t =>
+      t.titre.toLowerCase().includes(termeRecherche) ||
+      t.description.toLowerCase().includes(termeRecherche)
+    )
+  }
   // On parcourt la liste des tâches filtrées pour les afficher dans la page
   tachesFiltrees.forEach((tache, index) => {
-    const li = document.createElement('li')
+  const li = document.createElement('li')
 
     if (tache.estTerminee()) {
       li.className = 'list-group-item d-flex justify-content-between align-items-center list-group-item-success'
@@ -40,9 +47,9 @@ function afficherTaches (filtre = 'toutes') {
       li.className = 'list-group-item d-flex justify-content-between align-items-center'
     }
 
-    li.innerHTML = tache.getHtml(index)
+    li.innerHTML = tache.getHtml(index)// On récupère le code HTML de la tâche
 
-    listeTachesElement.appendChild(li)
+    listeTachesElement.appendChild(li)// On ajoute la tâche à la liste
   })
 
   mettreAJourProgression() // Mise à jour de la barre de progression
@@ -52,22 +59,22 @@ function afficherTaches (filtre = 'toutes') {
 /*
     * Fonction pour ajouter une tâche à la liste
  */
-async function ajouterTache () {
+ function ajouterTache () {
   const titre = document.getElementById('titre').value.trim()
   const description = document.getElementById('description').value.trim()
-  let dateEcheance = new Date(document.getElementById('date-echeance').value)
-  dateEcheance = dateEcheance.toLocaleDateString('fr-fr')
-  console.log(dateEcheance)
+  let dateEcheance = new Date(document.getElementById('date-echeance').value).toLocaleDateString('fr-fr')
   const priorite = document.getElementById('priorite').value
 
   if (!titre) {
-    alert('Le titre est obligatoire !')
+    alert('Le titre est obligatoire !')// On affiche une alerte si le titre est vide
     return
   }
+
+
   const nouvelleTache = new Tache(titre, description, dateEcheance, priorite) //Création de la tâche
   listeTaches.push(nouvelleTache) // Ajout de la tâche à la liste
-  afficherTaches()
-  enregistrerTaches()
+  afficherTaches()// On réaffiche les tâches
+  enregistrerTaches()// On enregistre les tâches
 }
 
 /*
@@ -130,11 +137,14 @@ function chargerTaches () {
     @param {number} index - L'index de la tâche à terminer
 */
 function terminerTache (index) {
-  const tache = listeTaches[index]
+  const tache = listeTaches[index]// On récupère la tâche à terminer
   if (tache) {
-    tache.terminer()
-    afficherTaches()
-    enregistrerTaches()
+    tache.terminer()// On appelle la méthode terminer() de la tâche
+    afficherTaches()// On réaffiche les tâches
+    enregistrerTaches()// On enregistre les tâches
+    if (Notification.permission === 'granted') {
+      new Notification(`La tâche "${tache.titre}" a été terminée !`)
+    }
   }
 }
 

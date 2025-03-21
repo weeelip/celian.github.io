@@ -1,7 +1,7 @@
 export class Tache {
   constructor (titre = '', description = '', dateEcheance, priorite = 'basse', statut = 'en_cours') {
-    this._titre = titre.trim()
-    this._description = description.trim()
+    this._titre = titre.trim()// trim() permet de supprimer les espaces en début et fin de chaîne
+    this._description = description.trim() //
     this._dateEcheance = dateEcheance
     this._priorite = ['basse', 'moyenne', 'elevee'].includes(priorite.toLowerCase()) ? priorite.toLowerCase() : 'basse'
     this._statut = statut
@@ -49,7 +49,7 @@ export class Tache {
   }
 
   set priorite (value) {
-    this._priorite = ['basse', 'moyenne', 'elevee'].includes(value.toLowerCase()) ? value.toLowerCase() : 'basse'
+    this._priorite = ['basse', 'moyenne', 'elevee'].includes(value.toLowerCase()) ? value.toLowerCase() : 'basse' // Si la priorité n'est pas valide, on la met à 'basse'
   }
 
   set statut (value) {
@@ -85,8 +85,8 @@ export class Tache {
                 </small>            
             </div>
             <div>
-                ${this.statut !== 'terminee' ? `<button class="btn btn-sm btn-success" onclick="terminerTache(${index})">✔</button>` : ''}
-                <button class="btn btn-sm btn-danger" onclick="supprimerTache(${index})">❌</button>
+                ${this.statut !== 'terminee' ? `<button class="btn btn-sm btn-success bi bi-check-lg" onclick="terminerTache(${index})"></button>` : ''}
+                <button class="btn btn-sm btn-danger bi bi-x-lg" onclick="supprimerTache(${index})"></button>
             </div>
         `
   }
